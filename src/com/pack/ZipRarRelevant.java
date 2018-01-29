@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 
 import org.apache.tools.ant.Project; 
 import org.apache.tools.ant.taskdefs.Expand;
-import org.apache.tools.ant.types.resources.comparators.Date;
 
 import de.innosystec.unrar.Archive; 
 import de.innosystec.unrar.rarfile.FileHeader; 
