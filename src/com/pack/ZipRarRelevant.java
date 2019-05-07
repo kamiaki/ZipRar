@@ -2,152 +2,177 @@ package com.pack;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import java.io.FileOutputStream; 
+import java.io.FileOutputStream;
 
-import org.apache.tools.ant.Project; 
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Expand;
 
-import de.innosystec.unrar.Archive; 
-import de.innosystec.unrar.rarfile.FileHeader; 
+import de.innosystec.unrar.Archive;
+import de.innosystec.unrar.rarfile.FileHeader;
 
 public class ZipRarRelevant {
-	/**
-	 * ¶ÁÈ¡ÎÄ¼ş¼ĞÄÚËùÓĞÑ¹Ëõ°ü
-	 * @param Path
-	 * @param Listpath
-	 * @param Listname
-	 */
-	public static void ReadFilesZip(String Path,List<String> Listpath,List<String> Listname) {
-		File file = new File(Path);
-		if(file.exists()) {
-			File[] files = file.listFiles();
-			for(File f : files) {
-				if(f.isDirectory()) {
-					ReadFilesZip(f.getPath(), Listpath, Listname);
-				}else {
-					if( f.getPath().endsWith("zip") || f.getPath().endsWith("ZIP")
-					 || f.getPath().endsWith("rar") || f.getPath().endsWith("RAR") ) {
-						if(Listpath != null) {
-							Listpath.add(f.getPath());
-						}
-						if(Listname != null) {
-							Listname.add(f.getName());
-						}
-					}	
-				}
-			}
-		}
-	}	
-	   /**  
-	* ½âÑ¹zip¸ñÊ½Ñ¹Ëõ°ü  
-	* ¶ÔÓ¦µÄÊÇant.jar  
-	*/   
-	private static void unzip(String sourceZip,String destDir) throws Exception{ 
-		try{ 
-			Project p = new Project(); 
-			Expand e = new Expand(); 
-			e.setProject(p); 
-			e.setSrc(new File(sourceZip)); 
-			e.setOverwrite(false); 
-			e.setDest(new File(destDir)); 
-			e.setEncoding("gbk"); //½âÑ¹ËõÊ±ÒªÖÆ¶¨±àÂë¸ñÊ½  
-			e.execute(); 
-		}catch(Exception e){ 
-			throw e; 
-		} 
-	} 
-	/**  
-	 * ½âÑ¹rar¸ñÊ½Ñ¹Ëõ°ü¡£  
-	 * ¶ÔÓ¦µÄÊÇjava-unrar-0.3.jar£¬µ«ÊÇjava-unrar-0.3.jarÓÖ»áÓÃµ½commons-logging-1.1.1.jar  
-	 */
-	private static void unrar(String sourceRar,String destDir) throws Exception{ 
-		 Archive a = null; 
-		 FileOutputStream fos = null; 
-		 try{ 
-			  a = new Archive(new File(sourceRar)); 
-			  FileHeader fh = a.nextFileHeader(); 
-			  while(fh!=null){ 
-				if(!fh.isDirectory()){ 
-					 //1 ¸ù¾İ²»Í¬µÄ²Ù×÷ÏµÍ³ÄÃµ½ÏàÓ¦µÄ destDirName ºÍ destFileName 
-					 String compressFileName = fh.getFileNameString().trim(); 
-					 String destFileName = ""; 
-					 String destDirName = ""; 
-					 //·ÇwindowsÏµÍ³ 
-					 if(File.separator.equals("/")){ 
-						  destFileName = destDir + compressFileName.replaceAll("\\\\", "/"); 
-						  destDirName = destFileName.substring(0, destFileName.lastIndexOf("/")); 
-					 //windowsÏµÍ³  
-					 }else{ 
-						  destFileName = destDir + compressFileName.replaceAll("/", "\\\\"); 
-						  destDirName = destFileName.substring(0, destFileName.lastIndexOf("\\")); 
-					 } 
-					 //2´´½¨ÎÄ¼ş¼Ğ 
-					 File dir = new File(destDirName); 
-					 if(!dir.exists()||!dir.isDirectory()){ 
-						 dir.mkdirs(); 
-					 } 
-					 //3½âÑ¹ËõÎÄ¼ş 
-					 fos = new FileOutputStream(new File(destFileName)); 
-					 a.extractFile(fh, fos); 
-					 fos.close(); 
-					 fos = null; 
-				} 
-				fh = a.nextFileHeader(); 
-		  } 
-			  a.close(); 
-			  a = null; 
-		 }catch(Exception e){ 
-			 throw e; 
-		 }finally{ 
-			 if(fos!=null){ 
-				 try{fos.close();fos=null;}catch(Exception e){e.printStackTrace();} 
-			 } 
-			 if(a!=null){ 
-				 try{a.close();a=null;}catch(Exception e){e.printStackTrace();} 
-			 } 
-		 } 
-	} 
-	/**  
-	 * ½âÑ¹Ëõ  
-	 */
-	public static void deCompress(String sourceFile,String destDir) throws Exception{ 
-		//±£Ö¤ÎÄ¼ş¼ĞÂ·¾¶×îºóÊÇ"/"»òÕß"\" 
-		char lastChar = destDir.charAt(destDir.length()-1); 
-		if(lastChar!='/'&&lastChar!='\\'){ 
-			destDir += File.separator; 
-		} 
-		//¸ù¾İÀàĞÍ£¬½øĞĞÏàÓ¦µÄ½âÑ¹Ëõ 
-		String type = sourceFile.substring(sourceFile.lastIndexOf(".")+1); 
-		if(type.equals("zip")){ 
-			unzip(sourceFile, destDir); 
-		}else if(type.equals("rar")){ 
-			unrar(sourceFile, destDir); 
-		}else{ 
-			throw new Exception("Ö»Ö§³ÖzipºÍrar¸ñÊ½µÄÑ¹Ëõ°ü£¡"); 
-		} 
-	} 
-	/**
-	 * Ñ¹Ëõ°ü×ªÎÄ¼ş
-	 * @param Path
-	 */
-	public static void ZipRar2files(String Path) {
-		String ZipPath = "";
-		String ZipFatherPath = "";
-		List<String> Listpath = new ArrayList<String>();
-		
-		ReadFilesZip(Path, Listpath, null);
-		for(int i = 0; i < Listpath.size(); i++) {
-			ZipPath = Listpath.get(i);
-			File files = new File(ZipPath.substring(0, ZipPath.length()-4)); 
-			files.mkdirs(); 
-			ZipFatherPath = ZipPath.substring(0, ZipPath.length()-4) + "\\";
-			try {
-				deCompress(ZipPath, ZipFatherPath);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}			
-		}	
-	}	
+    static String[] zipEx = new String[]{".zip", ".rar"};
+
+    /**
+     * è¯»å–æ–‡ä»¶å¤¹å†…æ‰€æœ‰å‹ç¼©åŒ…
+     *
+     * @param Path
+     * @param Listpath
+     * @param Listname
+     */
+    public static void ReadFilesZip(String Path, List<String> Listpath, List<String> Listname) {
+        File file = new File(Path);
+        if (file.exists()) {
+            File[] files = file.listFiles();
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    ReadFilesZip(f.getPath(), Listpath, Listname);
+                } else {
+                    String filePath = f.getPath();
+                    if (filePath.indexOf(".") != -1) {
+                        String dotName = filePath.substring(filePath.indexOf(".")).toLowerCase();
+                        List<String> zipExList = Arrays.asList(zipEx);
+                        if (zipExList.contains(dotName)) {
+                            if (Listpath != null) {
+                                Listpath.add(f.getPath());
+                            }
+                            if (Listname != null) {
+                                Listname.add(f.getName());
+                            }
+                        }
+                    }
+                }
+            }//for
+        }
+    }
+
+    /**
+     * è§£å‹zipæ ¼å¼å‹ç¼©åŒ…
+     * å¯¹åº”çš„æ˜¯ant.jar
+     */
+    private static void unzip(String sourceZip, String destDir) throws Exception {
+        Project p = new Project();
+        Expand e = new Expand();
+        e.setProject(p);
+        e.setSrc(new File(sourceZip));
+        e.setOverwrite(false);
+        e.setDest(new File(destDir));
+        e.setEncoding("gbk"); //è§£å‹ç¼©æ—¶è¦åˆ¶å®šç¼–ç æ ¼å¼ winRARè½¯ä»¶å‹ç¼©æ˜¯ç”¨çš„windowsé»˜è®¤çš„GBKæˆ–è€…GB2312ç¼–ç 
+        e.execute();
+    }
+
+    /**
+     * è§£å‹raræ ¼å¼å‹ç¼©åŒ…ã€‚
+     * å¯¹åº”çš„æ˜¯java-unrar-0.3.jarï¼Œä½†æ˜¯java-unrar-0.3.jaråˆä¼šç”¨åˆ°commons-logging-1.1.1.jar
+     */
+    private static void unrar(String sourceRar, String destDir) throws Exception {
+        Archive a = null;
+        FileOutputStream fos = null;
+        try {
+            a = new Archive(new File(sourceRar));
+            FileHeader fh = a.nextFileHeader();
+            while (fh != null) {
+                if (!fh.isDirectory()) {
+                    //1 æ ¹æ®ä¸åŒçš„æ“ä½œç³»ç»Ÿæ‹¿åˆ°ç›¸åº”çš„ destDirName å’Œ destFileName
+                    String compressFileName = "";
+                    if (fh.isUnicode()) {//è§£æ±ºä¸­æ–‡ä¹±ç 
+                        compressFileName = fh.getFileNameW().trim();
+                    } else {
+                        compressFileName = fh.getFileNameString().trim();
+                    }
+                    String destFileName = "";
+                    String destDirName = "";
+                    //éwindowsç³»ç»Ÿ
+                    if (File.separator.equals("/")) {
+                        destFileName = destDir + compressFileName.replaceAll("\\\\", "/");
+                        destDirName = destFileName.substring(0, destFileName.lastIndexOf("/"));
+                        //windowsç³»ç»Ÿ
+                    } else {
+                        destFileName = destDir + compressFileName.replaceAll("/", "\\\\");
+                        destDirName = destFileName.substring(0, destFileName.lastIndexOf("\\"));
+                    }
+                    //2åˆ›å»ºæ–‡ä»¶å¤¹
+                    File dir = new File(destDirName);
+                    if (!dir.exists() || !dir.isDirectory()) {
+                        dir.mkdirs();
+                    }
+                    //3è§£å‹ç¼©æ–‡ä»¶
+                    fos = new FileOutputStream(new File(destFileName));
+                    a.extractFile(fh, fos);
+                    fos.close();
+                    fos = null;
+                }
+                fh = a.nextFileHeader();
+            }
+            a.close();
+            a = null;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                    fos = null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (a != null) {
+                try {
+                    a.close();
+                    a = null;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * è§£å‹ç¼©
+     */
+    public static void deCompress(String sourceFile, String destDir) throws Exception {
+        //ä¿è¯æ–‡ä»¶å¤¹è·¯å¾„æœ€åæ˜¯"/"æˆ–è€…"\"
+        char lastChar = destDir.charAt(destDir.length() - 1);
+        if (lastChar != '/' && lastChar != '\\') {
+            destDir += File.separator;
+        }
+        //æ ¹æ®ç±»å‹ï¼Œè¿›è¡Œç›¸åº”çš„è§£å‹ç¼©
+        String type = sourceFile.substring(sourceFile.indexOf(".")).toLowerCase();
+        if (type.equals(zipEx[0])) {
+            unzip(sourceFile, destDir);
+        } else if (type.equals(zipEx[1])) {
+            unrar(sourceFile, destDir);
+        } else {
+            throw new Exception("åªæ”¯æŒzipå’Œraræ ¼å¼çš„å‹ç¼©åŒ…ï¼");
+        }
+    }
+
+    /**
+     * å‹ç¼©åŒ…è½¬æ–‡ä»¶ å¹¶åˆ é™¤åŸå‹ç¼©åŒ…
+     *
+     * @param Path
+     */
+    public static void ZipRar2files(String Path) {
+        String ZipPath = "";
+        String ZipFatherPath = "";
+        List<String> Listpath = new ArrayList<String>();
+
+        ReadFilesZip(Path, Listpath, null);                                        //è¯»å–è·¯å¾„ä¸‹æ‰€æœ‰å‹ç¼©æ–‡ä»¶
+        for (int i = 0; i < Listpath.size(); i++) {
+            ZipPath = Listpath.get(i);                                            //å¾—åˆ°ä¸€ä¸ªå‹ç¼©æ–‡ä»¶è·¯å¾„
+            File files = new File(ZipPath.substring(0, ZipPath.length() - 4));    //â†“â†“
+            files.mkdirs();                                                    //æ–°å»ºä¸€ä¸ªä¸å‹ç¼©æ–‡ä»¶åŒåçš„æ–‡ä»¶å¤¹
+            ZipFatherPath = ZipPath.substring(0, ZipPath.length() - 4) + "\\";    //å¾—åˆ°å‹ç¼©æ–‡ä»¶çˆ¶ç›®å½•
+            try {
+                deCompress(ZipPath, ZipFatherPath);                                //å‹ç¼©å¹¶è¾“å‡ºåˆ°â€œZipFatherPathâ€
+                new File(ZipPath).delete();                                        //åˆ é™¤æºæ–‡ä»¶
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
